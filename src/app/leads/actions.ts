@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { leadFormSchema } from "@/lib/lead-schema";
+import { leadCreateSchema, leadFieldsSchema } from "@/lib/lead-schema";
 
 export type LeadFormState = {
   error?: string;
@@ -17,19 +17,19 @@ function parseFollowUpDate(value: string | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function readForm(formData: FormData) {
-  return leadFormSchema.safeParse({
+function readFields(formData: FormData) {
+  return {
     organizationName: formData.get("organizationName"),
     vertical: formData.get("vertical"),
     contactName: formData.get("contactName") ?? "",
     contactTitle: formData.get("contactTitle") ?? "",
     phone: formData.get("phone") ?? "",
     email: formData.get("email") ?? "",
+    address: formData.get("address") ?? "",
     status: formData.get("status"),
-    notes: formData.get("notes") ?? "",
     nextFollowUpDate: formData.get("nextFollowUpDate") ?? "",
     footTrafficNotes: formData.get("footTrafficNotes") ?? "",
-  });
+  };
 }
 
 export async function createLead(
@@ -39,13 +39,18 @@ export async function createLead(
   const session = await auth();
   if (!session?.user) return { error: "Not signed in." };
 
-  const parsed = readForm(formData);
+  const parsed = leadCreateSchema.safeParse({
+    ...readFields(formData),
+    notes: formData.get("notes") ?? "",
+  });
   if (!parsed.success) {
     return { error: "Please fix the highlighted fields." };
   }
 
   const data = parsed.data;
-  const lead = await prisma.lead.create({
+  const notes = data.notes.trim();
+
+  await prisma.lead.create({
     data: {
       organizationName: data.organizationName,
       vertical: data.vertical,
@@ -53,16 +58,18 @@ export async function createLead(
       contactTitle: data.contactTitle || null,
       phone: data.phone || null,
       email: data.email || null,
+      address: data.address || null,
       status: data.status,
-      notes: data.notes,
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
       createdById: session.user.id,
+      notes: notes ? { create: [{ content: notes, authorId: session.user.id }] } : undefined,
     },
   });
 
   revalidatePath("/");
-  redirect(`/leads/${lead.id}`);
+  const intent = formData.get("intent");
+  redirect(intent === "exit" ? "/" : "/leads/new");
 }
 
 export async function updateLead(
@@ -73,7 +80,7 @@ export async function updateLead(
   const session = await auth();
   if (!session?.user) return { error: "Not signed in." };
 
-  const parsed = readForm(formData);
+  const parsed = leadFieldsSchema.safeParse(readFields(formData));
   if (!parsed.success) {
     return { error: "Please fix the highlighted fields." };
   }
@@ -88,8 +95,8 @@ export async function updateLead(
       contactTitle: data.contactTitle || null,
       phone: data.phone || null,
       email: data.email || null,
+      address: data.address || null,
       status: data.status,
-      notes: data.notes,
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
     },

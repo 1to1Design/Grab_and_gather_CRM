@@ -7,6 +7,7 @@ import {
   VERTICAL_LABELS,
   VERTICAL_ORDER,
 } from "@/lib/constants";
+import { VoiceDictateButton } from "@/components/voice-dictate-button";
 import type { LeadFormState } from "@/app/leads/actions";
 
 type FieldValues = {
@@ -16,6 +17,7 @@ type FieldValues = {
   contactTitle: string;
   phone: string;
   email: string;
+  address: string;
   status: string;
   notes: string;
   nextFollowUpDate: string;
@@ -29,6 +31,7 @@ const EMPTY: FieldValues = {
   contactTitle: "",
   phone: "",
   email: "",
+  address: "",
   status: "NEW",
   notes: "",
   nextFollowUpDate: "",
@@ -54,6 +57,10 @@ export function LeadForm({
 
   function set<K extends keyof FieldValues>(key: K, value: FieldValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function appendNotes(text: string) {
+    setValues((prev) => ({ ...prev, notes: prev.notes ? `${prev.notes} ${text}` : text }));
   }
 
   async function handleParse() {
@@ -86,6 +93,7 @@ export function LeadForm({
         contactTitle: data.contactTitle || prev.contactTitle,
         phone: data.phone || prev.phone,
         email: data.email || prev.email,
+        address: data.address || prev.address,
         status: data.status || prev.status,
         nextFollowUpDate: data.nextFollowUpDate || prev.nextFollowUpDate,
         footTrafficNotes: data.footTrafficNotes || prev.footTrafficNotes,
@@ -102,16 +110,19 @@ export function LeadForm({
     <form action={formAction} className="space-y-6">
       {showVoiceCapture && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-          <label htmlFor="notes" className="mb-2 block text-sm font-medium text-amber-200">
-            Voice note — talk it out, then tap Parse
-          </label>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <label htmlFor="notes" className="block text-sm font-medium text-amber-200">
+              Voice note — talk it out, then tap Parse
+            </label>
+            <VoiceDictateButton onTranscript={appendNotes} />
+          </div>
           <textarea
             id="notes"
             value={values.notes}
             onChange={(e) => set("notes", e.target.value)}
             rows={6}
             autoFocus
-            placeholder="Tap here, then tap the mic on your keyboard and just talk about how the meeting went…"
+            placeholder="Tap here, then tap the mic on your keyboard (or use the Dictate button) and just talk about how the meeting went…"
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
           />
           <div className="mt-2 flex items-center gap-3">
@@ -128,25 +139,9 @@ export function LeadForm({
             )}
             {parseError && <span className="text-sm text-red-400">{parseError}</span>}
           </div>
+          <input type="hidden" name="notes" value={values.notes} />
         </div>
       )}
-
-      {!showVoiceCapture && (
-        <div>
-          <label htmlFor="notes" className="mb-1 block text-sm font-medium text-neutral-300">
-            Notes
-          </label>
-          <textarea
-            id="notes"
-            name="notes"
-            value={values.notes}
-            onChange={(e) => set("notes", e.target.value)}
-            rows={8}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
-          />
-        </div>
-      )}
-      {showVoiceCapture && <input type="hidden" name="notes" value={values.notes} />}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -271,6 +266,20 @@ export function LeadForm({
       </div>
 
       <div>
+        <label htmlFor="address" className="mb-1 block text-sm font-medium text-neutral-300">
+          Address
+        </label>
+        <input
+          id="address"
+          name="address"
+          value={values.address}
+          onChange={(e) => set("address", e.target.value)}
+          placeholder="Street, city, state"
+          className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
+        />
+      </div>
+
+      <div>
         <label htmlFor="footTrafficNotes" className="mb-1 block text-sm font-medium text-neutral-300">
           Foot traffic / lead quality notes
         </label>
@@ -287,13 +296,36 @@ export function LeadForm({
 
       {state.error && <p className="text-sm text-red-400">{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-amber-500 px-5 py-2.5 font-medium text-neutral-950 transition hover:bg-amber-400 disabled:opacity-50"
-      >
-        {pending ? "Saving…" : submitLabel}
-      </button>
+      {showVoiceCapture ? (
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="submit"
+            name="intent"
+            value="exit"
+            disabled={pending}
+            className="rounded-lg border border-neutral-700 px-5 py-2.5 font-medium text-neutral-200 transition hover:bg-neutral-900 disabled:opacity-50"
+          >
+            {pending ? "Saving…" : "Save and Exit"}
+          </button>
+          <button
+            type="submit"
+            name="intent"
+            value="addNew"
+            disabled={pending}
+            className="rounded-lg bg-amber-500 px-5 py-2.5 font-medium text-neutral-950 transition hover:bg-amber-400 disabled:opacity-50"
+          >
+            {pending ? "Saving…" : "Save and Add New"}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-lg bg-amber-500 px-5 py-2.5 font-medium text-neutral-950 transition hover:bg-amber-400 disabled:opacity-50"
+        >
+          {pending ? "Saving…" : submitLabel}
+        </button>
+      )}
     </form>
   );
 }

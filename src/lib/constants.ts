@@ -7,6 +7,7 @@ export const VERTICAL_LABELS: Record<Vertical, string> = {
   APARTMENT_COMPLEX: "Apartment Complex",
   WAREHOUSE_MANUFACTURING: "Warehouse / Manufacturing",
   SCHOOL_DISTRICT: "School District",
+  DEALERSHIP: "Dealership",
   OTHER: "Other",
 };
 
@@ -17,6 +18,7 @@ export const VERTICAL_ORDER: Vertical[] = [
   "APARTMENT_COMPLEX",
   "WAREHOUSE_MANUFACTURING",
   "SCHOOL_DISTRICT",
+  "DEALERSHIP",
   "OTHER",
 ];
 
@@ -46,3 +48,11 @@ export const STATUS_COLORS: Record<LeadStatus, string> = {
   PLACED_WON: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
   PASSED: "bg-neutral-600/15 text-neutral-400 border-neutral-600/30",
 };
+
+export function isStatus(value: string): value is LeadStatus {
+  return (STATUS_ORDER as string[]).includes(value);
+}
+
+export function isVertical(value: string): value is Vertical {
+  return (VERTICAL_ORDER as string[]).includes(value);
+}

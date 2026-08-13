@@ -22,6 +22,10 @@ const EXTRACT_TOOL = {
       },
       contactName: { type: "string", description: "Name of the person spoken with, if mentioned. Empty string if none." },
       contactTitle: { type: "string", description: "Their title or role, if mentioned. Empty string if none." },
+      address: {
+        type: "string",
+        description: "Street address of the location, if mentioned. Empty string if none.",
+      },
       status: {
         type: "string",
         enum: STATUS_ORDER,
@@ -44,6 +48,7 @@ const EXTRACT_TOOL = {
       "vertical",
       "contactName",
       "contactTitle",
+      "address",
       "status",
       "nextFollowUpDate",
       "footTrafficNotes",
@@ -105,6 +110,7 @@ export async function POST(request: Request) {
         : "OTHER",
       contactName: extracted.contactName || "",
       contactTitle: extracted.contactTitle || "",
+      address: extracted.address || "",
       status: STATUS_ORDER.includes(extracted.status as (typeof STATUS_ORDER)[number])
         ? extracted.status
         : "CONTACTED",

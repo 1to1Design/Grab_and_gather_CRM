@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { LeadForm } from "@/components/lead-form";
+import { MeetingNotes } from "@/components/meeting-notes";
 import { updateLead } from "@/app/leads/actions";
 
 export default async function LeadDetailPage({
@@ -12,7 +13,13 @@ export default async function LeadDetailPage({
   const { id } = await params;
   const lead = await prisma.lead.findUnique({
     where: { id },
-    include: { createdBy: { select: { name: true } } },
+    include: {
+      createdBy: { select: { name: true } },
+      notes: {
+        orderBy: { createdAt: "desc" },
+        include: { author: { select: { name: true } } },
+      },
+    },
   });
 
   if (!lead) notFound();
@@ -39,14 +46,24 @@ export default async function LeadDetailPage({
           contactTitle: lead.contactTitle ?? "",
           phone: lead.phone ?? "",
           email: lead.email ?? "",
+          address: lead.address ?? "",
           status: lead.status,
-          notes: lead.notes,
           nextFollowUpDate: lead.nextFollowUpDate
             ? lead.nextFollowUpDate.toISOString().slice(0, 10)
             : "",
           footTrafficNotes: lead.footTrafficNotes ?? "",
         }}
         submitLabel="Save changes"
+      />
+
+      <MeetingNotes
+        leadId={lead.id}
+        notes={lead.notes.map((note) => ({
+          id: note.id,
+          content: note.content,
+          createdAt: note.createdAt.toISOString(),
+          author: note.author,
+        }))}
       />
     </div>
   );

@@ -12,6 +12,7 @@ const TARGET_FIELDS: { key: keyof ImportRow; label: string; required?: boolean }
   { key: "contactTitle", label: "Contact title / role" },
   { key: "phone", label: "Phone" },
   { key: "email", label: "Email" },
+  { key: "address", label: "Address" },
   { key: "footTrafficNotes", label: "Foot traffic / quality notes" },
   { key: "notes", label: "Notes" },
 ];
@@ -25,9 +26,10 @@ const GUESS_KEYWORDS: Partial<Record<keyof ImportRow, string[]>> = {
   contactTitle: ["title", "role", "position"],
   phone: ["phone", "cell", "tel"],
   email: ["email", "e-mail"],
+  address: ["address", "street", "location"],
   footTrafficNotes: ["review", "traffic", "visitor", "rating", "volume"],
   notes: ["note", "comment"],
-  organizationName: ["organization", "business name", "facility", "location", "gym", "clinic", "name"],
+  organizationName: ["organization", "business name", "facility", "gym", "clinic", "name"],
 };
 
 // organizationName is guessed last (its "name" keyword is a broad fallback
@@ -37,6 +39,7 @@ const GUESS_ORDER: (keyof ImportRow)[] = [
   "contactTitle",
   "phone",
   "email",
+  "address",
   "footTrafficNotes",
   "notes",
   "organizationName",
@@ -100,6 +103,7 @@ export function ImportClient() {
           contactTitle: get("contactTitle"),
           phone: get("phone"),
           email: get("email"),
+          address: get("address"),
           footTrafficNotes: get("footTrafficNotes"),
           notes: get("notes"),
         };

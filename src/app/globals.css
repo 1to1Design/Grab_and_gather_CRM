@@ -4,6 +4,10 @@
   /* Grab & Gather runs one branded dark theme, not a light/dark toggle. */
   --background: #0a0a0a;
   --foreground: #ededed;
+  /* Tells the browser to render native form chrome (the date input's
+     calendar icon, scrollbars, etc.) in a dark-appropriate palette so it
+     stays visible against our dark inputs, instead of rendering black. */
+  color-scheme: dark;
 }
 
 @theme inline {

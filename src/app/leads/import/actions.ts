@@ -13,6 +13,7 @@ export type ImportRow = {
   contactTitle?: string;
   phone?: string;
   email?: string;
+  address?: string;
   footTrafficNotes?: string;
   notes?: string;
 };
@@ -24,24 +25,33 @@ export async function importLeads(
   if (!session?.user) throw new Error("Not signed in.");
 
   const valid = rows.filter((r) => r.organizationName?.trim());
+  const authorId = session.user.id;
 
-  const data = valid.map((r) => ({
-    organizationName: r.organizationName.trim(),
-    vertical: (VERTICAL_ORDER as string[]).includes(r.vertical) ? (r.vertical as Vertical) : ("OTHER" as Vertical),
-    contactName: r.contactName?.trim() || null,
-    contactTitle: r.contactTitle?.trim() || null,
-    phone: r.phone?.trim() || null,
-    email: r.email?.trim() || null,
-    footTrafficNotes: r.footTrafficNotes?.trim() || null,
-    notes: r.notes?.trim() || "",
-    status: "NEW" as LeadStatus,
-    createdById: session.user.id,
-  }));
-
-  if (data.length > 0) {
-    await prisma.lead.createMany({ data });
+  if (valid.length > 0) {
+    await prisma.$transaction(
+      valid.map((r) => {
+        const notes = r.notes?.trim();
+        return prisma.lead.create({
+          data: {
+            organizationName: r.organizationName.trim(),
+            vertical: (VERTICAL_ORDER as string[]).includes(r.vertical)
+              ? (r.vertical as Vertical)
+              : ("OTHER" as Vertical),
+            contactName: r.contactName?.trim() || null,
+            contactTitle: r.contactTitle?.trim() || null,
+            phone: r.phone?.trim() || null,
+            email: r.email?.trim() || null,
+            address: r.address?.trim() || null,
+            footTrafficNotes: r.footTrafficNotes?.trim() || null,
+            status: "NEW" as LeadStatus,
+            createdById: authorId,
+            notes: notes ? { create: [{ content: notes, authorId }] } : undefined,
+          },
+        });
+      })
+    );
   }
 
   revalidatePath("/");
-  return { imported: data.length, skipped: rows.length - data.length };
+  return { imported: valid.length, skipped: rows.length - valid.length };
 }

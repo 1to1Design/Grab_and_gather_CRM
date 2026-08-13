@@ -20,6 +20,7 @@ enum Vertical {
   APARTMENT_COMPLEX
   WAREHOUSE_MANUFACTURING
   SCHOOL_DISTRICT
+  DEALERSHIP
   OTHER
 }
 
@@ -39,7 +40,8 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  leads Lead[]
+  leads      Lead[]
+  leadNotes  LeadNote[]
 
   @@map("users")
 }
@@ -53,10 +55,11 @@ model Lead {
   contactTitle     String?
   phone            String?
   email            String?
+  address          String?
 
   status LeadStatus @default(NEW)
 
-  notes String @db.Text
+  notes LeadNote[]
 
   nextFollowUpDate DateTime?
   dateLogged       DateTime  @default(now())
@@ -73,4 +76,19 @@ model Lead {
   @@index([vertical])
   @@index([nextFollowUpDate])
   @@map("leads")
+}
+
+model LeadNote {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String
+
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  @@index([leadId])
+  @@map("lead_notes")
 }
