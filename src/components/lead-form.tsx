@@ -51,6 +51,7 @@ export function LeadForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const [values, setValues] = useState<FieldValues>({ ...EMPTY, ...initialValues });
+  const [summary, setSummary] = useState("");
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsed, setParsed] = useState(false);
@@ -61,6 +62,12 @@ export function LeadForm({
 
   function appendNotes(text: string) {
     setValues((prev) => ({ ...prev, notes: prev.notes ? `${prev.notes} ${text}` : text }));
+    setSummary("");
+  }
+
+  function setNotes(value: string) {
+    set("notes", value);
+    setSummary("");
   }
 
   async function handleParse() {
@@ -98,6 +105,7 @@ export function LeadForm({
         nextFollowUpDate: data.nextFollowUpDate || prev.nextFollowUpDate,
         footTrafficNotes: data.footTrafficNotes || prev.footTrafficNotes,
       }));
+      setSummary(data.summary || "");
       setParsed(true);
     } catch {
       setParseError("Couldn't reach the parser. You can still fill in the fields by hand.");
@@ -119,7 +127,7 @@ export function LeadForm({
           <textarea
             id="notes"
             value={values.notes}
-            onChange={(e) => set("notes", e.target.value)}
+            onChange={(e) => setNotes(e.target.value)}
             rows={6}
             autoFocus
             placeholder="Tap here, then tap the mic on your keyboard (or use the Dictate button) and just talk about how the meeting went…"
@@ -140,6 +148,7 @@ export function LeadForm({
             {parseError && <span className="text-sm text-red-400">{parseError}</span>}
           </div>
           <input type="hidden" name="notes" value={values.notes} />
+          <input type="hidden" name="summary" value={summary} />
         </div>
       )}
 

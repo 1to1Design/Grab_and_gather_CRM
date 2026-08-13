@@ -12,6 +12,35 @@ type NoteItem = {
   author: { name: string };
 };
 
+// Notes built from a voice-note parse are stored as "summary\n\n> quoted raw
+// text" (see formatNoteWithQuote). Render the quoted tail as an actual
+// blockquote instead of plain text so the original wording stays visually
+// distinct from the AI summary above it. Manually-added notes have no "> "
+// lines and just render as plain text.
+function NoteBody({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const quoteStart = lines.findIndex((line) => line.startsWith("> "));
+
+  if (quoteStart === -1) {
+    return <p className="whitespace-pre-wrap text-sm text-neutral-300">{content}</p>;
+  }
+
+  const before = lines.slice(0, quoteStart).join("\n").trim();
+  const quote = lines
+    .slice(quoteStart)
+    .map((line) => line.replace(/^>\s?/, ""))
+    .join("\n");
+
+  return (
+    <div className="space-y-3 text-sm text-neutral-300">
+      {before && <p className="whitespace-pre-wrap">{before}</p>}
+      <blockquote className="whitespace-pre-wrap border-l-2 border-neutral-700 pl-3 italic text-neutral-500">
+        {quote}
+      </blockquote>
+    </div>
+  );
+}
+
 export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteItem[] }) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -113,9 +142,9 @@ export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteIte
                 </span>
                 <span className="text-neutral-600 transition group-open:rotate-180">▾</span>
               </summary>
-              <p className="whitespace-pre-wrap border-t border-neutral-800 px-4 py-3 text-sm text-neutral-300">
-                {note.content}
-              </p>
+              <div className="border-t border-neutral-800 px-4 py-3">
+                <NoteBody content={note.content} />
+              </div>
             </details>
           ))}
         </div>

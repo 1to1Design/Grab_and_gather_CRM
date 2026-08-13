@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { leadCreateSchema, leadFieldsSchema } from "@/lib/lead-schema";
+import { formatNoteWithQuote, summarizeLeadNote } from "@/lib/summarize-note";
 
 export type LeadFormState = {
   error?: string;
@@ -50,6 +51,13 @@ export async function createLead(
   const data = parsed.data;
   const notes = data.notes.trim();
 
+  let noteContent = "";
+  if (notes) {
+    const submittedSummary = String(formData.get("summary") ?? "").trim();
+    const summary = submittedSummary || (await summarizeLeadNote(notes));
+    noteContent = formatNoteWithQuote(summary, notes);
+  }
+
   await prisma.lead.create({
     data: {
       organizationName: data.organizationName,
@@ -63,7 +71,7 @@ export async function createLead(
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
       createdById: session.user.id,
-      notes: notes ? { create: [{ content: notes, authorId: session.user.id }] } : undefined,
+      notes: noteContent ? { create: [{ content: noteContent, authorId: session.user.id }] } : undefined,
     },
   });
 

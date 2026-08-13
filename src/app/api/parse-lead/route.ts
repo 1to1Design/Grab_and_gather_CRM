@@ -26,6 +26,21 @@ const EXTRACT_TOOL = {
         type: "string",
         description: "Street address of the location, if mentioned. Empty string if none.",
       },
+      phone: {
+        type: "string",
+        description:
+          "A phone number mentioned in the note, formatted as digits with dashes (e.g. 714-555-0192). Voice-to-text often transcribes numbers as spoken words instead of digits (e.g. 'seven one four, five five five, oh one nine two') — reconstruct the actual number in that case. Prefer a number explicitly introduced as the contact's cell, direct line, or personal number over a general front-desk or office line if both appear. Empty string if no phone number is mentioned.",
+      },
+      email: {
+        type: "string",
+        description:
+          "An email address mentioned in the note. Voice-to-text often transcribes emails as spoken words instead of symbols (e.g. 'maria at fitzone gym dot com' means maria@fitzonegym.com) — reconstruct the actual address with @ and . in that case. Empty string if no email is mentioned.",
+      },
+      summary: {
+        type: "string",
+        description:
+          "A concise 2-4 sentence summary of what happened and the outcome, written in plain prose (not restating the raw note). Call out any action items or next steps and key lead-quality details (contact info, decision timeline, traffic/interest signals) if present. Empty string if the note is too sparse to summarize meaningfully.",
+      },
       status: {
         type: "string",
         enum: STATUS_ORDER,
@@ -49,6 +64,9 @@ const EXTRACT_TOOL = {
       "contactName",
       "contactTitle",
       "address",
+      "phone",
+      "email",
+      "summary",
       "status",
       "nextFollowUpDate",
       "footTrafficNotes",
@@ -90,7 +108,7 @@ export async function POST(request: Request) {
     const message = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
-      system: `You extract structured sales-lead fields from a rep's rambling voice-note transcript for Grab & Gather, a premium automated retail (smart vending) placement company. Today's date is ${today}. Only use information actually present in the note — leave a field as an empty string rather than guessing when it isn't mentioned. Never invent a phone number, email, or contact name.`,
+      system: `You extract structured sales-lead fields from a rep's rambling voice-note transcript for Grab & Gather, a premium automated retail (smart vending) placement company. Today's date is ${today}. Only use information actually present in the note — leave a field as an empty string rather than guessing when it isn't mentioned. Never invent a phone number, email, or contact name that isn't in the note; but if one IS in the note spoken as words rather than digits/symbols (e.g. "seven one four five five five" or "maria at gmail dot com"), reconstruct the standard written form — that is not inventing, it's transcribing what was said.`,
       messages: [{ role: "user", content: text }],
       tools: [EXTRACT_TOOL],
       tool_choice: { type: "tool", name: "extract_lead" },
@@ -116,8 +134,9 @@ export async function POST(request: Request) {
         : "CONTACTED",
       nextFollowUpDate: extracted.nextFollowUpDate || "",
       footTrafficNotes: extracted.footTrafficNotes || "",
-      phone: phone ?? "",
-      email: email ?? "",
+      phone: phone || extracted.phone || "",
+      email: email || extracted.email || "",
+      summary: extracted.summary || "",
     });
   } catch (error) {
     console.error("parse-lead failed", error);
