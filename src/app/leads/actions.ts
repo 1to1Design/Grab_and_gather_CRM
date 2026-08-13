@@ -112,5 +112,5 @@ export async function updateLead(
 
   revalidatePath("/");
   revalidatePath(`/leads/${id}`);
-  redirect(`/leads/${id}`);
+  redirect("/");
 }
