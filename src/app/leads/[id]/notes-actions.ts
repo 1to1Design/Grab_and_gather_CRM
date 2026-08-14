@@ -15,10 +15,18 @@ export async function addLeadNote(
   const content = String(formData.get("content") ?? "").trim();
   if (!content) return { error: "Note can't be empty." };
 
-  await prisma.leadNote.create({
-    data: { leadId, content, authorId: session.user.id },
-  });
+  const now = new Date();
+  await prisma.$transaction([
+    prisma.leadNote.create({
+      data: { leadId, content, authorId: session.user.id, createdAt: now },
+    }),
+    prisma.lead.update({
+      where: { id: leadId },
+      data: { lastContactedAt: now },
+    }),
+  ]);
 
   revalidatePath(`/leads/${leadId}`);
+  revalidatePath("/");
   return {};
 }

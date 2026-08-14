@@ -3,29 +3,37 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { STATUS_LABELS, STATUS_ORDER, VERTICAL_LABELS, VERTICAL_ORDER } from "@/lib/constants";
+import { SORT_OPTIONS } from "@/lib/lead-sort";
+
+const DEFAULT_SORT = SORT_OPTIONS[0].value;
 
 export function PipelineFilters({
   initialQ,
   initialStatus,
   initialVertical,
+  initialSort,
 }: {
   initialQ: string;
   initialStatus: string;
   initialVertical: string;
+  initialSort: string;
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [status, setStatus] = useState(initialStatus);
   const [vertical, setVertical] = useState(initialVertical);
+  const [sort, setSort] = useState(initialSort || DEFAULT_SORT);
 
-  function navigate(next: { q?: string; status?: string; vertical?: string }) {
+  function navigate(next: { q?: string; status?: string; vertical?: string; sort?: string }) {
     const nq = next.q ?? q;
     const nstatus = next.status ?? status;
     const nvertical = next.vertical ?? vertical;
+    const nsort = next.sort ?? sort;
     const params = new URLSearchParams();
     if (nq) params.set("q", nq);
     if (nstatus) params.set("status", nstatus);
     if (nvertical) params.set("vertical", nvertical);
+    if (nsort && nsort !== DEFAULT_SORT) params.set("sort", nsort);
     router.push(params.toString() ? `/?${params.toString()}` : "/");
   }
 
@@ -39,6 +47,11 @@ export function PipelineFilters({
     navigate({ vertical: value });
   }
 
+  function handleSortChange(value: string) {
+    setSort(value);
+    navigate({ sort: value });
+  }
+
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") navigate({ q });
   }
@@ -47,7 +60,7 @@ export function PipelineFilters({
     setQ("");
     setStatus("");
     setVertical("");
-    router.push("/");
+    navigate({ q: "", status: "", vertical: "" });
   }
 
   const hasFilters = Boolean(q || status || vertical);
@@ -83,6 +96,17 @@ export function PipelineFilters({
         {VERTICAL_ORDER.map((v) => (
           <option key={v} value={v}>
             {VERTICAL_LABELS[v]}
+          </option>
+        ))}
+      </select>
+      <select
+        value={sort}
+        onChange={(e) => handleSortChange(e.target.value)}
+        className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"
+      >
+        {SORT_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            Sort: {o.label}
           </option>
         ))}
       </select>

@@ -1,14 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STATUS_LABELS, VERTICAL_LABELS, isStatus, isVertical } from "@/lib/constants";
+import { SORT_OPTIONS, buildLeadOrderBy } from "@/lib/lead-sort";
 import { PrintTrigger } from "./print-trigger";
 
 export default async function PrintPipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; vertical?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; vertical?: string; q?: string; sort?: string }>;
 }) {
-  const { status, vertical, q } = await searchParams;
+  const { status, vertical, q, sort } = await searchParams;
 
   const where: Prisma.LeadWhereInput = {};
   if (status && isStatus(status)) where.status = status;
@@ -22,18 +23,21 @@ export default async function PrintPipelinePage({
 
   const leads = await prisma.lead.findMany({
     where,
-    orderBy: [{ nextFollowUpDate: { sort: "asc", nulls: "last" } }, { dateLogged: "desc" }],
+    orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
+
+  const sortLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? SORT_OPTIONS[0].label;
 
   const filterSummary =
     [
       status && isStatus(status) ? `Status: ${STATUS_LABELS[status]}` : null,
       vertical && isVertical(vertical) ? `Vertical: ${VERTICAL_LABELS[vertical]}` : null,
       q ? `Search: "${q}"` : null,
+      `Sort: ${sortLabel}`,
     ]
       .filter(Boolean)
-      .join(" · ") || "All leads";
+      .join(" · ");
 
   return (
     <div className="min-h-screen bg-white px-8 py-10 text-neutral-900 print:px-6 print:py-6">
@@ -63,6 +67,7 @@ export default async function PrintPipelinePage({
             <th className="py-2 pr-3">Address</th>
             <th className="py-2 pr-3">Status</th>
             <th className="py-2 pr-3">Next follow-up</th>
+            <th className="py-2 pr-3">Last contacted</th>
             <th className="py-2 pr-3">Rep</th>
           </tr>
         </thead>
@@ -80,6 +85,9 @@ export default async function PrintPipelinePage({
               <td className="py-2 pr-3">{STATUS_LABELS[lead.status]}</td>
               <td className="py-2 pr-3">
                 {lead.nextFollowUpDate ? lead.nextFollowUpDate.toLocaleDateString() : "—"}
+              </td>
+              <td className="py-2 pr-3">
+                {lead.lastContactedAt ? lead.lastContactedAt.toLocaleDateString() : "—"}
               </td>
               <td className="py-2 pr-3">{lead.createdBy.name}</td>
             </tr>

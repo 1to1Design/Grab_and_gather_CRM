@@ -71,6 +71,7 @@ export async function createLead(
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
       createdById: session.user.id,
+      lastContactedAt: noteContent ? new Date() : null,
       notes: noteContent ? { create: [{ content: noteContent, authorId: session.user.id }] } : undefined,
     },
   });

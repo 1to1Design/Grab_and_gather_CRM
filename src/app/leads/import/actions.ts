@@ -45,6 +45,7 @@ export async function importLeads(
             footTrafficNotes: r.footTrafficNotes?.trim() || null,
             status: "NEW" as LeadStatus,
             createdById: authorId,
+            lastContactedAt: notes ? new Date() : null,
             notes: notes ? { create: [{ content: notes, authorId }] } : undefined,
           },
         });

@@ -2,14 +2,15 @@ import Link from "next/link";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STATUS_COLORS, STATUS_LABELS, VERTICAL_LABELS, isStatus, isVertical } from "@/lib/constants";
+import { buildLeadOrderBy } from "@/lib/lead-sort";
 import { PipelineFilters } from "@/components/pipeline-filters";
 
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; vertical?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; vertical?: string; q?: string; sort?: string }>;
 }) {
-  const { status, vertical, q } = await searchParams;
+  const { status, vertical, q, sort } = await searchParams;
 
   const where: Prisma.LeadWhereInput = {};
   if (status && isStatus(status)) where.status = status;
@@ -23,7 +24,7 @@ export default async function PipelinePage({
 
   const leads = await prisma.lead.findMany({
     where,
-    orderBy: [{ nextFollowUpDate: { sort: "asc", nulls: "last" } }, { dateLogged: "desc" }],
+    orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
 
@@ -34,6 +35,7 @@ export default async function PipelinePage({
   if (status) printParams.set("status", status);
   if (vertical) printParams.set("vertical", vertical);
   if (q) printParams.set("q", q);
+  if (sort) printParams.set("sort", sort);
   const printHref = printParams.toString() ? `/print?${printParams.toString()}` : "/print";
 
   return (
@@ -59,7 +61,12 @@ export default async function PipelinePage({
         </div>
       </div>
 
-      <PipelineFilters initialQ={q ?? ""} initialStatus={status ?? ""} initialVertical={vertical ?? ""} />
+      <PipelineFilters
+        initialQ={q ?? ""}
+        initialStatus={status ?? ""}
+        initialVertical={vertical ?? ""}
+        initialSort={sort ?? ""}
+      />
 
       {leads.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-800 px-6 py-16 text-center text-neutral-500">
@@ -107,6 +114,11 @@ export default async function PipelinePage({
                     {lead.nextFollowUpDate && (
                       <span className={overdue ? "text-red-400" : "text-neutral-400"}>
                         Follow up {lead.nextFollowUpDate.toLocaleDateString()}
+                      </span>
+                    )}
+                    {lead.lastContactedAt && (
+                      <span className="text-neutral-500">
+                        Last contact {lead.lastContactedAt.toLocaleDateString()}
                       </span>
                     )}
                     <span className="text-neutral-600">{lead.createdBy.name}</span>

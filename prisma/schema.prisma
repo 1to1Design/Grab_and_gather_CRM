@@ -63,6 +63,7 @@ model Lead {
 
   nextFollowUpDate DateTime?
   dateLogged       DateTime  @default(now())
+  lastContactedAt  DateTime?
 
   footTrafficNotes String? @db.Text
 
@@ -75,6 +76,7 @@ model Lead {
   @@index([status])
   @@index([vertical])
   @@index([nextFollowUpDate])
+  @@index([lastContactedAt])
   @@map("leads")
 }
 
