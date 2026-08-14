@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { STATUS_COLORS, STATUS_LABELS, TERMINAL_STATUSES, VERTICAL_LABELS } from "@/lib/constants";
+import {
+  LEAD_QUALITY_COLORS,
+  LEAD_QUALITY_LABELS,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  TERMINAL_STATUSES,
+  VERTICAL_LABELS,
+} from "@/lib/constants";
 import { buildLeadOrderBy } from "@/lib/lead-sort";
 import { buildLeadWhere } from "@/lib/lead-filters";
 import { PipelineFilters } from "@/components/pipeline-filters";
@@ -9,13 +16,13 @@ import { PipelineFilters } from "@/components/pipeline-filters";
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; vertical?: string; q?: string; sort?: string }>;
+  searchParams: Promise<{ status?: string; vertical?: string; quality?: string; q?: string; sort?: string }>;
 }) {
-  const { status, vertical, q, sort } = await searchParams;
+  const { status, vertical, quality, q, sort } = await searchParams;
   const session = await auth();
 
   const leads = await prisma.lead.findMany({
-    where: buildLeadWhere({ status, vertical, q }),
+    where: buildLeadWhere({ status, vertical, quality, q }),
     orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
@@ -49,6 +56,7 @@ export default async function PipelinePage({
   const printParams = new URLSearchParams();
   if (status) printParams.set("status", status);
   if (vertical) printParams.set("vertical", vertical);
+  if (quality) printParams.set("quality", quality);
   if (q) printParams.set("q", q);
   if (sort) printParams.set("sort", sort);
   const printHref = printParams.toString() ? `/print?${printParams.toString()}` : "/print";
@@ -98,6 +106,7 @@ export default async function PipelinePage({
         initialQ={q ?? ""}
         initialStatus={status ?? ""}
         initialVertical={vertical ?? ""}
+        initialQuality={quality ?? ""}
         initialSort={sort ?? ""}
       />
 
@@ -134,6 +143,13 @@ export default async function PipelinePage({
                       >
                         {STATUS_LABELS[lead.status]}
                       </span>
+                      {lead.leadQuality !== "UNRATED" && (
+                        <span
+                          className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${LEAD_QUALITY_COLORS[lead.leadQuality]}`}
+                        >
+                          {LEAD_QUALITY_LABELS[lead.leadQuality]}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 truncate text-sm text-neutral-400">
                       {VERTICAL_LABELS[lead.vertical]}

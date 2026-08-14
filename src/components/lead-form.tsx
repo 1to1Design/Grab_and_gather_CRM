@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import {
+  LEAD_QUALITY_LABELS,
+  LEAD_QUALITY_ORDER,
   STATUS_LABELS,
   STATUS_ORDER,
   VERTICAL_LABELS,
@@ -20,6 +22,7 @@ type FieldValues = {
   email: string;
   address: string;
   status: string;
+  leadQuality: string;
   notes: string;
   nextFollowUpDate: string;
   footTrafficNotes: string;
@@ -36,6 +39,7 @@ const EMPTY: FieldValues = {
   email: "",
   address: "",
   status: "NEW",
+  leadQuality: "UNRATED",
   notes: "",
   nextFollowUpDate: "",
   footTrafficNotes: "",
@@ -306,6 +310,25 @@ export function LeadForm({
             {STATUS_ORDER.map((s) => (
               <option key={s} value={s}>
                 {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="leadQuality" className="mb-1 block text-sm font-medium text-neutral-300">
+            Lead quality
+          </label>
+          <select
+            id="leadQuality"
+            name="leadQuality"
+            value={values.leadQuality}
+            onChange={(e) => set("leadQuality", e.target.value)}
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
+          >
+            {LEAD_QUALITY_ORDER.map((q) => (
+              <option key={q} value={q}>
+                {LEAD_QUALITY_LABELS[q]}
               </option>
             ))}
           </select>

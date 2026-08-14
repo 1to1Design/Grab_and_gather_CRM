@@ -1,8 +1,13 @@
 import { Prisma } from "@prisma/client";
-import { HIDDEN_BY_DEFAULT_STATUS, isStatus, isVertical } from "@/lib/constants";
+import { HIDDEN_BY_DEFAULT_STATUS, isLeadQuality, isStatus, isVertical } from "@/lib/constants";
 
-export function buildLeadWhere(filters: { status?: string; vertical?: string; q?: string }): Prisma.LeadWhereInput {
-  const { status, vertical, q } = filters;
+export function buildLeadWhere(filters: {
+  status?: string;
+  vertical?: string;
+  quality?: string;
+  q?: string;
+}): Prisma.LeadWhereInput {
+  const { status, vertical, quality, q } = filters;
   const where: Prisma.LeadWhereInput = {};
 
   if (status && isStatus(status)) {
@@ -14,6 +19,7 @@ export function buildLeadWhere(filters: { status?: string; vertical?: string; q?
   }
 
   if (vertical && isVertical(vertical)) where.vertical = vertical;
+  if (quality && isLeadQuality(quality)) where.leadQuality = quality;
 
   if (q) {
     where.OR = [

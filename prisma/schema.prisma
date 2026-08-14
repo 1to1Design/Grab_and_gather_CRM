@@ -34,6 +34,17 @@ enum LeadStatus {
   LOST
 }
 
+// Ordered worst-to-best on purpose: Postgres enum comparisons follow
+// declaration order, so `orderBy: { leadQuality: 'desc' }` naturally
+// surfaces the most promising leads first.
+enum LeadQuality {
+  UNRATED
+  BELOW_THRESHOLD
+  QUALIFIED
+  HIGH_VOLUME
+  MEGA_TRAFFIC
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -59,7 +70,8 @@ model Lead {
   email            String?
   address          String?
 
-  status LeadStatus @default(NEW)
+  status      LeadStatus  @default(NEW)
+  leadQuality LeadQuality @default(UNRATED)
 
   notes LeadNote[]
 
@@ -82,6 +94,7 @@ model Lead {
   @@index([vertical])
   @@index([nextFollowUpDate])
   @@index([lastContactedAt])
+  @@index([leadQuality])
   @@map("leads")
 }
 

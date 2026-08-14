@@ -48,6 +48,7 @@ export default async function LeadDetailPage({
           email: lead.email ?? "",
           address: lead.address ?? "",
           status: lead.status,
+          leadQuality: lead.leadQuality,
           nextFollowUpDate: lead.nextFollowUpDate
             ? lead.nextFollowUpDate.toISOString().slice(0, 10)
             : "",

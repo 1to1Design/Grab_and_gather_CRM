@@ -1,5 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { STATUS_LABELS, VERTICAL_LABELS, isStatus, isVertical } from "@/lib/constants";
+import {
+  LEAD_QUALITY_LABELS,
+  STATUS_LABELS,
+  VERTICAL_LABELS,
+  isLeadQuality,
+  isStatus,
+  isVertical,
+} from "@/lib/constants";
 import { SORT_OPTIONS, buildLeadOrderBy } from "@/lib/lead-sort";
 import { buildLeadWhere } from "@/lib/lead-filters";
 import { PrintTrigger } from "./print-trigger";
@@ -7,12 +14,12 @@ import { PrintTrigger } from "./print-trigger";
 export default async function PrintPipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; vertical?: string; q?: string; sort?: string }>;
+  searchParams: Promise<{ status?: string; vertical?: string; quality?: string; q?: string; sort?: string }>;
 }) {
-  const { status, vertical, q, sort } = await searchParams;
+  const { status, vertical, quality, q, sort } = await searchParams;
 
   const leads = await prisma.lead.findMany({
-    where: buildLeadWhere({ status, vertical, q }),
+    where: buildLeadWhere({ status, vertical, quality, q }),
     orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
@@ -23,6 +30,7 @@ export default async function PrintPipelinePage({
     [
       status && isStatus(status) ? `Status: ${STATUS_LABELS[status]}` : null,
       vertical && isVertical(vertical) ? `Vertical: ${VERTICAL_LABELS[vertical]}` : null,
+      quality && isLeadQuality(quality) ? `Quality: ${LEAD_QUALITY_LABELS[quality]}` : null,
       q ? `Search: "${q}"` : null,
       `Sort: ${sortLabel}`,
     ]
@@ -56,6 +64,7 @@ export default async function PrintPipelinePage({
             <th className="py-2 pr-3">Phone</th>
             <th className="py-2 pr-3">Address</th>
             <th className="py-2 pr-3">Status</th>
+            <th className="py-2 pr-3">Quality</th>
             <th className="py-2 pr-3">Next follow-up</th>
             <th className="py-2 pr-3">Last contacted</th>
             <th className="py-2 pr-3">Rep</th>
@@ -73,6 +82,7 @@ export default async function PrintPipelinePage({
               <td className="py-2 pr-3">{lead.phone ?? "—"}</td>
               <td className="py-2 pr-3">{lead.address ?? "—"}</td>
               <td className="py-2 pr-3">{STATUS_LABELS[lead.status]}</td>
+              <td className="py-2 pr-3">{LEAD_QUALITY_LABELS[lead.leadQuality]}</td>
               <td className="py-2 pr-3">
                 {lead.nextFollowUpDate ? lead.nextFollowUpDate.toLocaleDateString() : "—"}
               </td>

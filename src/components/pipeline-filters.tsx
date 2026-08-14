@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { STATUS_LABELS, STATUS_ORDER, VERTICAL_LABELS, VERTICAL_ORDER } from "@/lib/constants";
+import {
+  LEAD_QUALITY_LABELS,
+  LEAD_QUALITY_ORDER,
+  STATUS_LABELS,
+  STATUS_ORDER,
+  VERTICAL_LABELS,
+  VERTICAL_ORDER,
+} from "@/lib/constants";
 import { SORT_OPTIONS } from "@/lib/lead-sort";
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value;
@@ -11,28 +18,39 @@ export function PipelineFilters({
   initialQ,
   initialStatus,
   initialVertical,
+  initialQuality,
   initialSort,
 }: {
   initialQ: string;
   initialStatus: string;
   initialVertical: string;
+  initialQuality: string;
   initialSort: string;
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [status, setStatus] = useState(initialStatus);
   const [vertical, setVertical] = useState(initialVertical);
+  const [quality, setQuality] = useState(initialQuality);
   const [sort, setSort] = useState(initialSort || DEFAULT_SORT);
 
-  function navigate(next: { q?: string; status?: string; vertical?: string; sort?: string }) {
+  function navigate(next: {
+    q?: string;
+    status?: string;
+    vertical?: string;
+    quality?: string;
+    sort?: string;
+  }) {
     const nq = next.q ?? q;
     const nstatus = next.status ?? status;
     const nvertical = next.vertical ?? vertical;
+    const nquality = next.quality ?? quality;
     const nsort = next.sort ?? sort;
     const params = new URLSearchParams();
     if (nq) params.set("q", nq);
     if (nstatus) params.set("status", nstatus);
     if (nvertical) params.set("vertical", nvertical);
+    if (nquality) params.set("quality", nquality);
     if (nsort && nsort !== DEFAULT_SORT) params.set("sort", nsort);
     router.push(params.toString() ? `/?${params.toString()}` : "/");
   }
@@ -45,6 +63,11 @@ export function PipelineFilters({
   function handleVerticalChange(value: string) {
     setVertical(value);
     navigate({ vertical: value });
+  }
+
+  function handleQualityChange(value: string) {
+    setQuality(value);
+    navigate({ quality: value });
   }
 
   function handleSortChange(value: string) {
@@ -60,10 +83,11 @@ export function PipelineFilters({
     setQ("");
     setStatus("");
     setVertical("");
-    navigate({ q: "", status: "", vertical: "" });
+    setQuality("");
+    navigate({ q: "", status: "", vertical: "", quality: "" });
   }
 
-  const hasFilters = Boolean(q || status || vertical);
+  const hasFilters = Boolean(q || status || vertical || quality);
 
   return (
     <div className="mb-6 flex flex-wrap gap-2">
@@ -96,6 +120,18 @@ export function PipelineFilters({
         {VERTICAL_ORDER.map((v) => (
           <option key={v} value={v}>
             {VERTICAL_LABELS[v]}
+          </option>
+        ))}
+      </select>
+      <select
+        value={quality}
+        onChange={(e) => handleQualityChange(e.target.value)}
+        className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-500"
+      >
+        <option value="">All qualities</option>
+        {LEAD_QUALITY_ORDER.map((lq) => (
+          <option key={lq} value={lq}>
+            {LEAD_QUALITY_LABELS[lq]}
           </option>
         ))}
       </select>
