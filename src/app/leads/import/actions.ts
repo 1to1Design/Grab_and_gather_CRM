@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { VERTICAL_ORDER } from "@/lib/constants";
+import { findSimilarNames } from "@/lib/similarity";
 import type { LeadStatus, Vertical } from "@prisma/client";
 
 export type ImportRow = {
@@ -20,12 +21,26 @@ export type ImportRow = {
 
 export async function importLeads(
   rows: ImportRow[]
-): Promise<{ imported: number; skipped: number }> {
+): Promise<{ imported: number; skipped: number; duplicateWarnings: string[] }> {
   const session = await auth();
   if (!session?.user) throw new Error("Not signed in.");
 
   const valid = rows.filter((r) => r.organizationName?.trim());
   const authorId = session.user.id;
+
+  // Check against leads that already existed before this import — not
+  // against each other, so two genuinely distinct rows in the same batch
+  // don't get flagged against one another.
+  const existingLeads = await prisma.lead.findMany({ select: { id: true, organizationName: true } });
+  const duplicateWarnings: string[] = [];
+  for (const row of valid) {
+    const matches = findSimilarNames(row.organizationName.trim(), existingLeads);
+    if (matches.length > 0) {
+      duplicateWarnings.push(
+        `"${row.organizationName.trim()}" looks similar to existing lead "${matches[0].organizationName}"`
+      );
+    }
+  }
 
   if (valid.length > 0) {
     await prisma.$transaction(
@@ -54,5 +69,5 @@ export async function importLeads(
   }
 
   revalidatePath("/");
-  return { imported: valid.length, skipped: rows.length - valid.length };
+  return { imported: valid.length, skipped: rows.length - valid.length, duplicateWarnings };
 }

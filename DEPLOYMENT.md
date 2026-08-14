@@ -14,8 +14,7 @@ Pick one — either works fine with this app, no code changes needed either way:
 
 - **[Neon](https://neon.tech)** — simplest, generous free tier, good default choice
 - **[Supabase](https://supabase.com)** — also gives you a GUI to browse the data
-  and file storage for later (useful once you attach placement agreements to won
-  leads)
+  and file storage for later
 
 Steps (Neon shown, Supabase is nearly identical):
 
@@ -25,12 +24,42 @@ Steps (Neon shown, Supabase is nearly identical):
    `postgresql://user:password@host/dbname?sslmode=require`. Save it somewhere
    safe; you'll paste it into Vercel in step 3.
 
-## 2. Push this repo to GitHub
+## 2. Get a Claude API key (for voice-note parsing)
+
+Sign up at [console.anthropic.com](https://console.anthropic.com) and create an
+API key. Without this, leads can still be logged manually — only the
+dictate-and-parse step needs it.
+
+## 3. Get VAPID keys (for push notification reminders) — optional
+
+Only needed if you want the daily "you have follow-ups due" push reminders.
+Skip this and the rest of the app still works fine, just without that feature.
+
+From this project folder, run:
+
+```bash
+npx web-push generate-vapid-keys --json
+```
+
+That prints a `publicKey` and `privateKey` — save both, you'll need them in the
+next step. Also pick a `VAPID_SUBJECT`, which is just a `mailto:` address the
+push services use to contact you if something's wrong (e.g.
+`mailto:genesis@1to1design.co`).
+
+Generate one more secret, this one for the scheduled reminder job itself:
+
+```bash
+openssl rand -base64 24
+```
+
+Save that as your `CRON_SECRET`.
+
+## 4. Push this repo to GitHub
 
 If it isn't already, get this code into a GitHub repository (ask me to do this
 part if you want — I can push directly). Vercel deploys straight from GitHub.
 
-## 3. Deploy to Vercel
+## 5. Deploy to Vercel
 
 1. Sign up at [vercel.com](https://vercel.com) — "Continue with GitHub" is the
    easiest option, it links your account automatically.
@@ -42,40 +71,44 @@ part if you want — I can push directly). Vercel deploys straight from GitHub.
    | `DATABASE_URL` | the Neon/Supabase connection string from step 1 |
    | `NEXTAUTH_SECRET` | a random secret — generate one by running `openssl rand -base64 32` on your computer, or ask me to generate one |
    | `NEXTAUTH_URL` | your Vercel URL, e.g. `https://grab-gather-crm.vercel.app` (Vercel shows you this after the first deploy — you may need to add this variable and redeploy once you know the URL) |
-   | `ANTHROPIC_API_KEY` | your Claude API key from [console.anthropic.com](https://console.anthropic.com) |
+   | `ANTHROPIC_API_KEY` | your Claude API key from step 2 |
+   | `SEED_ADMIN_EMAIL` | the email for your own first login |
+   | `SEED_ADMIN_NAME` | your name |
+   | `SEED_ADMIN_PASSWORD` | a real password (you can change it later) |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | the `publicKey` from step 3 (optional) |
+   | `VAPID_PRIVATE_KEY` | the `privateKey` from step 3 (optional) |
+   | `VAPID_SUBJECT` | your `mailto:` address from step 3 (optional) |
+   | `CRON_SECRET` | the secret from step 3 (optional, but required for push reminders to fire) |
 
-4. Click **Deploy**. First deploy takes 1-2 minutes.
+4. Click **Deploy**.
 
-## 4. Set up the database schema on the live database
+That first deploy does more than usual: the build itself runs the database
+migration and creates your login (via `SEED_ADMIN_*`) automatically — no
+manual database commands needed. Every future deploy re-checks the schema the
+same way, so adding fields later just works on the next push.
 
-The database starts empty — it needs the same tables your local one has. From
-your computer, in this project folder:
+## 6. Set NEXTAUTH_URL and redeploy
 
-```bash
-DATABASE_URL="<paste the Neon/Supabase connection string>" npx prisma migrate deploy
-```
+You won't know your exact `https://....vercel.app` URL until after the first
+deploy. Once you have it: **Settings → Environment Variables**, add
+`NEXTAUTH_URL` with that URL, then **Deployments → (latest) → ⋯ → Redeploy**.
+Login won't work correctly until this is set.
 
-This applies the schema to the live database without touching your local one
-(your local `.env` file is untouched — you're overriding `DATABASE_URL` just for
-this one command).
+## 7. Log in and add your team
 
-## 5. Create your first login on the live app
+Go to your Vercel URL and log in with the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
+you set in step 5. From **Team** in the nav, add a login for each rep — they
+can then log in from their own phone's browser at the same URL.
 
-Same idea — run the seed script against the live database instead of local:
+## 8. Verify the daily reminder job (if you set up push)
 
-```bash
-DATABASE_URL="<paste the connection string>" \
-SEED_ADMIN_EMAIL="genesis@1to1design.co" \
-SEED_ADMIN_NAME="Genesis" \
-SEED_ADMIN_PASSWORD="<pick a real password>" \
-npx prisma db seed
-```
+Vercel reads `vercel.json` in this repo and schedules the reminder job on its
+own — nothing to configure in the dashboard. It runs once a day around 7-8am
+Pacific. You can confirm it's registered under your Vercel project's
+**Settings → Cron Jobs**, and each rep can turn reminders on for their own
+phone from **Notifications** in the nav (this has to be enabled per device).
 
-Now go to your Vercel URL, log in with that email/password, and you're in. From
-**Team** in the nav, add a login for each rep — they can then log in from their
-own phone's browser at the same URL.
-
-## 6. Optional: a real domain
+## 9. Optional: a real domain
 
 By default you get a `*.vercel.app` URL, which works fine and is reachable from
 any phone. If you'd rather use something like `crm.grabandgather.com`, buy the
@@ -85,7 +118,5 @@ Domains** — Vercel walks you through the DNS records.
 ## Updating the live app later
 
 Once this is deployed, any future changes just need `git push` to the branch
-Vercel is watching (usually `main`) — Vercel rebuilds and redeploys
-automatically. If a change adds new fields to the data model, run
-`DATABASE_URL="<live url>" npx prisma migrate deploy` once after that push to
-bring the live database's schema up to date.
+Vercel is watching — Vercel rebuilds, redeploys, and re-applies any schema
+changes automatically. Nothing manual required.

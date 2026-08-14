@@ -46,6 +46,9 @@ export const STATUS_ORDER: LeadStatus[] = [
 // filter selected) — they only show up when Lost is explicitly selected.
 export const HIDDEN_BY_DEFAULT_STATUS: LeadStatus = "LOST";
 
+// Closed-out leads don't need follow-up reminders anymore.
+export const TERMINAL_STATUSES: LeadStatus[] = ["PLACED_WON", "PASSED", "LOST"];
+
 export const STATUS_COLORS: Record<LeadStatus, string> = {
   NEW: "bg-blue-500/15 text-blue-300 border-blue-500/30",
   CONTACTED: "bg-purple-500/15 text-purple-300 border-purple-500/30",

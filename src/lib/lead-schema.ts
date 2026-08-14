@@ -13,6 +13,8 @@ export const leadFieldsSchema = z.object({
   status: z.enum(STATUS_ORDER as [LeadStatus, ...LeadStatus[]]),
   nextFollowUpDate: z.string().optional().or(z.literal("")),
   footTrafficNotes: z.string().optional().or(z.literal("")),
+  financialModelUrl: z.string().trim().optional().or(z.literal("")),
+  placementAgreementUrl: z.string().trim().optional().or(z.literal("")),
 });
 
 // Creating a lead also captures the raw voice note as the first meeting note.

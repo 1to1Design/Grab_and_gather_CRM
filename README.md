@@ -10,7 +10,9 @@ across every rep's login.
 - **Postgres** via **Prisma** — the data store
 - **NextAuth (Credentials)** — email/password login per rep, no third-party account needed
 - **Claude Haiku** (Anthropic API) — parses freeform dictated text into structured lead fields
+- **Web Push** — optional daily reminder notifications for follow-ups due
 - **Tailwind CSS** — styling
+- Installable as a PWA (add to home screen on iOS/Android)
 
 ## Local development
 
@@ -29,25 +31,38 @@ Open http://localhost:3000, log in with the seeded account, and add more reps fr
 
 ## How it's organized
 
-- `src/app/page.tsx` — the pipeline (list of all leads, filterable by status/vertical)
-- `src/app/leads/new` — new lead form, includes the voice-note capture + parse flow
-- `src/app/leads/[id]` — lead detail / edit
-- `src/app/leads/import` — CSV import with column mapping, for bringing in existing lead lists
+- `src/app/page.tsx` — the pipeline: list of all leads, filterable by status/vertical/search,
+  sortable by follow-up date or last contacted, with an overdue/due-today banner for your
+  own leads. Leads marked Lost are hidden unless you filter for them specifically.
+- `src/app/leads/new` — new lead form: voice-note capture + parse flow, live duplicate-name
+  warning as you type the organization name, Save and Exit / Save and Add New
+- `src/app/leads/[id]` — lead detail / edit, with a Meeting Notes history at the bottom
+  (collapsible, newest first) and a Documents section (financial model / placement
+  agreement links)
+- `src/app/leads/import` — CSV import with column mapping, flags rows that look similar
+  to existing leads after import
+- `src/app/print` — branded, filter-aware PDF/print export of the pipeline
 - `src/app/settings/team` — add rep logins
-- `src/app/api/parse-lead` — server route that calls Claude to extract structured fields
-  from a raw voice-note transcript. The raw text is always saved verbatim to the lead's
-  notes field regardless of what gets parsed out of it.
-- `prisma/schema.prisma` — the data model (`User`, `Lead`)
+- `src/app/settings/notifications` — per-device push notification opt-in
+- `src/app/api/parse-lead` — calls Claude to extract structured fields (including a
+  summary) from a raw voice-note transcript. The raw text is always preserved verbatim
+  as a quoted block in the lead's first note, regardless of what gets parsed out of it.
+- `src/app/api/cron/follow-up-reminders` — daily digest push notification job (see
+  `vercel.json` for the schedule), auth-gated by `CRON_SECRET`
+- `src/lib/similarity.ts` — the fuzzy name-matching behind duplicate detection
+- `prisma/schema.prisma` — the data model (`User`, `Lead`, `LeadNote`, `PushSubscription`)
 
 ## Voice note capture
 
-There's no custom audio recording in the MVP. The voice note field is a plain
-textarea — tap it, use your phone's own keyboard dictation (the mic key on iOS or
-Android), and it works like any other text input. This is more reliable across
-phones than in-browser speech recognition, especially on iPhone.
+The voice note field is a plain textarea. On phones, tap it and use the OS keyboard's
+own dictation (the mic key on iOS or Android) — more reliable across devices than
+in-browser speech recognition, especially on iPhone. On desktop there's also a
+"Dictate" button that uses the browser's Web Speech API directly (Chrome/Edge/Safari;
+unsupported in Firefox).
 
 ## Deployment
 
-Not deployed yet by design — see [DEPLOYMENT.md](./DEPLOYMENT.md) for the steps to
-put this on a real URL reps can hit from their phones, whenever you're ready to
-bring reps on.
+Live — see [DEPLOYMENT.md](./DEPLOYMENT.md) for the full setup (hosted Postgres,
+Vercel, environment variables, and the optional push-notification setup). Any
+future `git push` to the deployed branch redeploys automatically, including
+re-applying database migrations.

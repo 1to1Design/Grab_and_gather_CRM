@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import Link from "next/link";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   STATUS_LABELS,
   STATUS_ORDER,
@@ -22,6 +23,8 @@ type FieldValues = {
   notes: string;
   nextFollowUpDate: string;
   footTrafficNotes: string;
+  financialModelUrl: string;
+  placementAgreementUrl: string;
 };
 
 const EMPTY: FieldValues = {
@@ -36,7 +39,13 @@ const EMPTY: FieldValues = {
   notes: "",
   nextFollowUpDate: "",
   footTrafficNotes: "",
+  financialModelUrl: "",
+  placementAgreementUrl: "",
 };
+
+function toHref(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
 
 export function LeadForm({
   action,
@@ -55,10 +64,39 @@ export function LeadForm({
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [parsed, setParsed] = useState(false);
+  const [duplicateMatches, setDuplicateMatches] = useState<{ id: string; organizationName: string }[]>([]);
+  const duplicateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function set<K extends keyof FieldValues>(key: K, value: FieldValues[K]) {
     setValues((prev) => ({ ...prev, [key]: value }));
   }
+
+  // Only relevant on the create form — editing a lead would just match
+  // itself.
+  useEffect(() => {
+    if (!showVoiceCapture) return;
+    if (duplicateTimer.current) clearTimeout(duplicateTimer.current);
+
+    const name = values.organizationName;
+    duplicateTimer.current = setTimeout(async () => {
+      if (name.trim().length < 3) {
+        setDuplicateMatches([]);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/leads/check-duplicate?name=${encodeURIComponent(name)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setDuplicateMatches(data.matches ?? []);
+      } catch {
+        // Non-critical — just skip the warning if the check fails.
+      }
+    }, 500);
+
+    return () => {
+      if (duplicateTimer.current) clearTimeout(duplicateTimer.current);
+    };
+  }, [values.organizationName, showVoiceCapture]);
 
   function appendNotes(text: string) {
     setValues((prev) => ({ ...prev, notes: prev.notes ? `${prev.notes} ${text}` : text }));
@@ -165,6 +203,20 @@ export function LeadForm({
             onChange={(e) => set("organizationName", e.target.value)}
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
           />
+          {duplicateMatches.length > 0 && (
+            <p className="mt-1.5 text-xs text-amber-400">
+              Looks similar to{" "}
+              {duplicateMatches.map((m, i) => (
+                <span key={m.id}>
+                  {i > 0 && ", "}
+                  <Link href={`/leads/${m.id}`} target="_blank" className="underline hover:text-amber-300">
+                    {m.organizationName}
+                  </Link>
+                </span>
+              ))}
+              . Double-check this isn&apos;t a duplicate.
+            </p>
+          )}
         </div>
 
         <div>
@@ -301,6 +353,63 @@ export function LeadForm({
           placeholder="e.g. ~150 unique visitors/day, 800 Google reviews"
           className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
         />
+      </div>
+
+      <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+        <h3 className="mb-3 text-sm font-medium text-neutral-300">Documents</h3>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="financialModelUrl" className="mb-1 block text-sm font-medium text-neutral-300">
+              Financial model link
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="financialModelUrl"
+                name="financialModelUrl"
+                value={values.financialModelUrl}
+                onChange={(e) => set("financialModelUrl", e.target.value)}
+                placeholder="Paste a Drive/Dropbox link"
+                className="w-full min-w-0 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
+              />
+              {values.financialModelUrl && (
+                <a
+                  href={toHref(values.financialModelUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 rounded-lg border border-neutral-700 px-3 py-2.5 text-sm text-amber-400 hover:bg-neutral-800"
+                >
+                  Open ↗
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="placementAgreementUrl" className="mb-1 block text-sm font-medium text-neutral-300">
+              Placement agreement link
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="placementAgreementUrl"
+                name="placementAgreementUrl"
+                value={values.placementAgreementUrl}
+                onChange={(e) => set("placementAgreementUrl", e.target.value)}
+                placeholder="Paste a Drive/Dropbox link"
+                className="w-full min-w-0 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
+              />
+              {values.placementAgreementUrl && (
+                <a
+                  href={toHref(values.placementAgreementUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 rounded-lg border border-neutral-700 px-3 py-2.5 text-sm text-amber-400 hover:bg-neutral-800"
+                >
+                  Open ↗
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {state.error && <p className="text-sm text-red-400">{state.error}</p>}

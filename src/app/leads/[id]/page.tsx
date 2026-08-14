@@ -52,6 +52,8 @@ export default async function LeadDetailPage({
             ? lead.nextFollowUpDate.toISOString().slice(0, 10)
             : "",
           footTrafficNotes: lead.footTrafficNotes ?? "",
+          financialModelUrl: lead.financialModelUrl ?? "",
+          placementAgreementUrl: lead.placementAgreementUrl ?? "",
         }}
         submitLabel="Save changes"
       />

@@ -68,7 +68,11 @@ export function ImportClient() {
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [defaultVertical, setDefaultVertical] = useState<string>(VERTICAL_ORDER[0]);
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{
+    imported: number;
+    skipped: number;
+    duplicateWarnings: string[];
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   function handleFile(file: File) {
@@ -193,16 +197,31 @@ export function ImportClient() {
 
       {error && <p className="text-sm text-red-400">{error}</p>}
       {result && (
-        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-300">
-          Imported {result.imported} lead{result.imported === 1 ? "" : "s"}.
-          {result.skipped > 0 && ` Skipped ${result.skipped} row(s) with no organization name.`}{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="ml-2 underline hover:text-emerald-200"
-          >
-            View pipeline
-          </button>
+        <div className="space-y-3">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-300">
+            Imported {result.imported} lead{result.imported === 1 ? "" : "s"}.
+            {result.skipped > 0 && ` Skipped ${result.skipped} row(s) with no organization name.`}{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="ml-2 underline hover:text-emerald-200"
+            >
+              View pipeline
+            </button>
+          </div>
+          {result.duplicateWarnings.length > 0 && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-300">
+              <p className="mb-2 font-medium">
+                {result.duplicateWarnings.length} row{result.duplicateWarnings.length === 1 ? "" : "s"} looked
+                similar to leads that already existed — worth a quick check for duplicates:
+              </p>
+              <ul className="list-disc space-y-1 pl-5">
+                {result.duplicateWarnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>

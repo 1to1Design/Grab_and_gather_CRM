@@ -30,6 +30,8 @@ function readFields(formData: FormData) {
     status: formData.get("status"),
     nextFollowUpDate: formData.get("nextFollowUpDate") ?? "",
     footTrafficNotes: formData.get("footTrafficNotes") ?? "",
+    financialModelUrl: formData.get("financialModelUrl") ?? "",
+    placementAgreementUrl: formData.get("placementAgreementUrl") ?? "",
   };
 }
 
@@ -70,6 +72,8 @@ export async function createLead(
       status: data.status,
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
+      financialModelUrl: data.financialModelUrl || null,
+      placementAgreementUrl: data.placementAgreementUrl || null,
       createdById: session.user.id,
       lastContactedAt: noteContent ? new Date() : null,
       notes: noteContent ? { create: [{ content: noteContent, authorId: session.user.id }] } : undefined,
@@ -108,6 +112,8 @@ export async function updateLead(
       status: data.status,
       nextFollowUpDate: parseFollowUpDate(data.nextFollowUpDate),
       footTrafficNotes: data.footTrafficNotes || null,
+      financialModelUrl: data.financialModelUrl || null,
+      placementAgreementUrl: data.placementAgreementUrl || null,
     },
   });
 

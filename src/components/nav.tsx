@@ -37,6 +37,12 @@ export async function Nav() {
           >
             Team
           </Link>
+          <Link
+            href="/settings/notifications"
+            className="hidden rounded-md px-2.5 py-1.5 text-neutral-300 hover:bg-neutral-900 hover:text-white sm:block"
+          >
+            Notifications
+          </Link>
           <form
             action={async () => {
               "use server";

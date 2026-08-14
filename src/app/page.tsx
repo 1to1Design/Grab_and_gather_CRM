@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { STATUS_COLORS, STATUS_LABELS, VERTICAL_LABELS } from "@/lib/constants";
+import { STATUS_COLORS, STATUS_LABELS, TERMINAL_STATUSES, VERTICAL_LABELS } from "@/lib/constants";
 import { buildLeadOrderBy } from "@/lib/lead-sort";
 import { buildLeadWhere } from "@/lib/lead-filters";
 import { PipelineFilters } from "@/components/pipeline-filters";
@@ -11,6 +12,7 @@ export default async function PipelinePage({
   searchParams: Promise<{ status?: string; vertical?: string; q?: string; sort?: string }>;
 }) {
   const { status, vertical, q, sort } = await searchParams;
+  const session = await auth();
 
   const leads = await prisma.lead.findMany({
     where: buildLeadWhere({ status, vertical, q }),
@@ -20,6 +22,29 @@ export default async function PipelinePage({
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  let overdueCount = 0;
+  let dueTodayCount = 0;
+  if (session?.user) {
+    [overdueCount, dueTodayCount] = await Promise.all([
+      prisma.lead.count({
+        where: {
+          createdById: session.user.id,
+          status: { notIn: TERMINAL_STATUSES },
+          nextFollowUpDate: { lt: today },
+        },
+      }),
+      prisma.lead.count({
+        where: {
+          createdById: session.user.id,
+          status: { notIn: TERMINAL_STATUSES },
+          nextFollowUpDate: { gte: today, lt: tomorrow },
+        },
+      }),
+    ]);
+  }
 
   const printParams = new URLSearchParams();
   if (status) printParams.set("status", status);
@@ -51,6 +76,24 @@ export default async function PipelinePage({
         </div>
       </div>
 
+      {(overdueCount > 0 || dueTodayCount > 0) && (
+        <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm">
+          <span className="text-red-300">
+            {overdueCount > 0 && (
+              <>
+                {overdueCount} follow-up{overdueCount === 1 ? "" : "s"} overdue
+              </>
+            )}
+            {overdueCount > 0 && dueTodayCount > 0 && " · "}
+            {dueTodayCount > 0 && (
+              <>
+                {dueTodayCount} due today
+              </>
+            )}
+          </span>
+        </div>
+      )}
+
       <PipelineFilters
         initialQ={q ?? ""}
         initialStatus={status ?? ""}
@@ -72,8 +115,7 @@ export default async function PipelinePage({
             const overdue =
               lead.nextFollowUpDate &&
               lead.nextFollowUpDate < today &&
-              lead.status !== "PLACED_WON" &&
-              lead.status !== "PASSED";
+              !TERMINAL_STATUSES.includes(lead.status);
             const mapsHref = lead.address
               ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address)}`
               : null;
