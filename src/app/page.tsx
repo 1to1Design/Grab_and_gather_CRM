@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { STATUS_COLORS, STATUS_LABELS, VERTICAL_LABELS, isStatus, isVertical } from "@/lib/constants";
+import { STATUS_COLORS, STATUS_LABELS, VERTICAL_LABELS } from "@/lib/constants";
 import { buildLeadOrderBy } from "@/lib/lead-sort";
+import { buildLeadWhere } from "@/lib/lead-filters";
 import { PipelineFilters } from "@/components/pipeline-filters";
 
 export default async function PipelinePage({
@@ -12,18 +12,8 @@ export default async function PipelinePage({
 }) {
   const { status, vertical, q, sort } = await searchParams;
 
-  const where: Prisma.LeadWhereInput = {};
-  if (status && isStatus(status)) where.status = status;
-  if (vertical && isVertical(vertical)) where.vertical = vertical;
-  if (q) {
-    where.OR = [
-      { organizationName: { contains: q, mode: "insensitive" } },
-      { contactName: { contains: q, mode: "insensitive" } },
-    ];
-  }
-
   const leads = await prisma.lead.findMany({
-    where,
+    where: buildLeadWhere({ status, vertical, q }),
     orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
