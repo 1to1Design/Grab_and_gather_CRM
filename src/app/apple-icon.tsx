@@ -11,21 +11,16 @@ export default function AppleIcon() {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           background: "#0a0a0a",
+          fontFamily: "sans-serif",
         }}
       >
-        <span
-          style={{
-            fontSize: 110,
-            fontWeight: 700,
-            color: "#f59e0b",
-            fontFamily: "sans-serif",
-          }}
-        >
-          {"&"}
-        </span>
+        <span style={{ fontSize: 24, fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>Grab</span>
+        <span style={{ fontSize: 80, fontWeight: 700, color: "#f59e0b", lineHeight: 1 }}>{"&"}</span>
+        <span style={{ fontSize: 24, fontWeight: 700, color: "#ffffff", lineHeight: 1 }}>Gather</span>
       </div>
     ),
     { ...size }
