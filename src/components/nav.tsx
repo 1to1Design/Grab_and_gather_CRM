@@ -26,6 +26,12 @@ export async function Nav() {
             New lead
           </Link>
           <Link
+            href="/ask"
+            className="rounded-md px-2.5 py-1.5 text-neutral-300 hover:bg-neutral-900 hover:text-white"
+          >
+            Ask
+          </Link>
+          <Link
             href="/leads/import"
             className="hidden rounded-md px-2.5 py-1.5 text-neutral-300 hover:bg-neutral-900 hover:text-white sm:block"
           >

@@ -54,12 +54,30 @@ openssl rand -base64 24
 
 Save that as your `CRON_SECRET`.
 
-## 4. Push this repo to GitHub
+## 4. Get a Google Maps API key (for the Ask chat's route planning) — optional
+
+The **Ask** tab lets you chat with an assistant about your pipeline — "what
+lead should I follow up on next," or "plan a route for the leads I need to
+visit today." Questions and lookups work with just your Claude API key from
+step 2. Route planning specifically needs one more key:
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and
+   create a project (or use an existing one).
+2. Enable the **Directions API** for that project.
+3. Under **APIs & Services → Credentials**, create an API key.
+4. Enable billing on the project — Google requires a card on file for this
+   API, but the free monthly credit comfortably covers a small sales team's
+   usage.
+
+Skip this and Ask still answers questions about your leads fine — it'll just
+say route planning isn't set up yet if you ask it to build a route.
+
+## 6. Push this repo to GitHub
 
 If it isn't already, get this code into a GitHub repository (ask me to do this
 part if you want — I can push directly). Vercel deploys straight from GitHub.
 
-## 5. Deploy to Vercel
+## 7. Deploy to Vercel
 
 1. Sign up at [vercel.com](https://vercel.com) — "Continue with GitHub" is the
    easiest option, it links your account automatically.
@@ -79,6 +97,7 @@ part if you want — I can push directly). Vercel deploys straight from GitHub.
    | `VAPID_PRIVATE_KEY` | the `privateKey` from step 3 (optional) |
    | `VAPID_SUBJECT` | your `mailto:` address from step 3 (optional) |
    | `CRON_SECRET` | the secret from step 3 (optional, but required for push reminders to fire) |
+   | `GOOGLE_MAPS_API_KEY` | the key from step 4 (optional, only needed for route planning in Ask) |
 
 4. Click **Deploy**.
 
@@ -87,20 +106,20 @@ migration and creates your login (via `SEED_ADMIN_*`) automatically — no
 manual database commands needed. Every future deploy re-checks the schema the
 same way, so adding fields later just works on the next push.
 
-## 6. Set NEXTAUTH_URL and redeploy
+## 8. Set NEXTAUTH_URL and redeploy
 
 You won't know your exact `https://....vercel.app` URL until after the first
 deploy. Once you have it: **Settings → Environment Variables**, add
 `NEXTAUTH_URL` with that URL, then **Deployments → (latest) → ⋯ → Redeploy**.
 Login won't work correctly until this is set.
 
-## 7. Log in and add your team
+## 9. Log in and add your team
 
 Go to your Vercel URL and log in with the `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
 you set in step 5. From **Team** in the nav, add a login for each rep — they
 can then log in from their own phone's browser at the same URL.
 
-## 8. Verify the daily reminder job (if you set up push)
+## 10. Verify the daily reminder job (if you set up push)
 
 Vercel reads `vercel.json` in this repo and schedules the reminder job on its
 own — nothing to configure in the dashboard. It runs once a day around 7-8am
@@ -108,7 +127,7 @@ Pacific. You can confirm it's registered under your Vercel project's
 **Settings → Cron Jobs**, and each rep can turn reminders on for their own
 phone from **Notifications** in the nav (this has to be enabled per device).
 
-## 9. Optional: a real domain
+## 11. Optional: a real domain
 
 By default you get a `*.vercel.app` URL, which works fine and is reachable from
 any phone. If you'd rather use something like `crm.grabandgather.com`, buy the
