@@ -72,14 +72,14 @@ export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteIte
   return (
     <div className="mt-10 border-t border-neutral-800 pt-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Meeting notes</h2>
+        <h2 className="text-lg font-semibold text-white">Contact log</h2>
         {!showForm && (
           <button
             type="button"
             onClick={() => setShowForm(true)}
             className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-medium text-neutral-950 hover:bg-amber-400"
           >
-            + New meeting note
+            + Log contact
           </button>
         )}
       </div>
@@ -88,7 +88,7 @@ export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteIte
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <label htmlFor="new-note" className="block text-sm font-medium text-amber-200">
-              New meeting note
+              Log contact
             </label>
             <VoiceDictateButton onTranscript={appendDraft} />
           </div>
@@ -98,7 +98,7 @@ export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteIte
             onChange={(e) => setDraft(e.target.value)}
             rows={5}
             autoFocus
-            placeholder="Talk it out or type what happened…"
+            placeholder="Talked on the phone, left a voicemail, they stopped by, emailed back and forth… what happened?"
             className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2.5 text-white outline-none focus:border-amber-500"
           />
           {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
@@ -127,7 +127,7 @@ export function MeetingNotes({ leadId, notes }: { leadId: string; notes: NoteIte
       )}
 
       {notes.length === 0 ? (
-        <p className="text-sm text-neutral-500">No meeting notes yet.</p>
+        <p className="text-sm text-neutral-500">No contact logged yet.</p>
       ) : (
         <div className="space-y-2">
           {notes.map((note, idx) => (

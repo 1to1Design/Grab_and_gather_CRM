@@ -16,13 +16,31 @@ import { PipelineFilters } from "@/components/pipeline-filters";
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; vertical?: string; quality?: string; q?: string; sort?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    vertical?: string;
+    quality?: string;
+    q?: string;
+    sort?: string;
+    overdue?: string;
+    dueToday?: string;
+  }>;
 }) {
-  const { status, vertical, quality, q, sort } = await searchParams;
+  const { status, vertical, quality, q, sort, overdue: overdueParam, dueToday: dueTodayParam } = await searchParams;
   const session = await auth();
+  const showOverdueOnly = overdueParam === "1";
+  const showDueTodayOnly = dueTodayParam === "1";
 
   const leads = await prisma.lead.findMany({
-    where: buildLeadWhere({ status, vertical, quality, q }),
+    where: buildLeadWhere({
+      status,
+      vertical,
+      quality,
+      q,
+      overdue: showOverdueOnly,
+      dueToday: showDueTodayOnly,
+      createdById: session?.user?.id,
+    }),
     orderBy: buildLeadOrderBy(sort ?? ""),
     include: { createdBy: { select: { name: true } } },
   });
@@ -88,17 +106,26 @@ export default async function PipelinePage({
         <div className="mb-5 flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm">
           <span className="text-red-300">
             {overdueCount > 0 && (
-              <>
+              <Link href="/?overdue=1" className="underline decoration-red-500/40 underline-offset-2 hover:text-red-200">
                 {overdueCount} follow-up{overdueCount === 1 ? "" : "s"} overdue
-              </>
+              </Link>
             )}
             {overdueCount > 0 && dueTodayCount > 0 && " · "}
             {dueTodayCount > 0 && (
-              <>
+              <Link href="/?dueToday=1" className="underline decoration-red-500/40 underline-offset-2 hover:text-red-200">
                 {dueTodayCount} due today
-              </>
+              </Link>
             )}
           </span>
+        </div>
+      )}
+
+      {(showOverdueOnly || showDueTodayOnly) && (
+        <div className="mb-5 flex items-center gap-2 text-sm text-neutral-400">
+          <span>Showing your {showOverdueOnly ? "overdue" : "due today"} follow-ups only.</span>
+          <Link href="/" className="text-amber-500 hover:underline">
+            Show all leads
+          </Link>
         </div>
       )}
 
