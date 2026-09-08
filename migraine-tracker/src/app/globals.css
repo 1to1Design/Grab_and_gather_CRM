@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/*
+ * A dark, warm, low-glare palette is the default rather than an option.
+ * Light sensitivity is a core migraine symptom, so a bright white screen is
+ * actively painful for the person this app is for. Colors avoid heavy blue
+ * and full-saturation whites for the same reason.
+ */
+:root {
+  --bg: #14110f;
+  --surface: #1e1a17;
+  --surface-2: #2a2521;
+  --border: #3a332d;
+  --text: #efe9e2;
+  --muted: #a79c92;
+  --accent: #f0a868;
+  --accent-ink: #2a1a0c;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Room for the fixed bottom navigation, plus the phone's home indicator. */
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Comfort mode, for use mid-attack: everything dims and desaturates in one
+ * step so the screen can be read without adding to the light sensitivity.
+ */
+body[data-comfort="on"] {
+  filter: brightness(0.68) saturate(0.7) contrast(0.95);
+}
+
+/* Severity ramp. Deliberately muted -- a screaming red on a dark background
+   is its own glare source for someone mid-migraine. */
+/* Until a rating is chosen the control stays neutral, so an untouched slider
+   never reads as "I rated this a zero". */
+.sev-none { --sev: var(--muted); }
+.sev-0 { --sev: #55705c; }
+.sev-1 { --sev: #5d7d5f; }
+.sev-2 { --sev: #6d8a58; }
+.sev-3 { --sev: #8a9150; }
+.sev-4 { --sev: #a89550; }
+.sev-5 { --sev: #b98c4a; }
+.sev-6 { --sev: #c07e45; }
+.sev-7 { --sev: #c26b42; }
+.sev-8 { --sev: #bd583f; }
+.sev-9 { --sev: #b34a3e; }
+.sev-10 { --sev: #a63f3d; }
+
+/* Large, unmissable range input. The thumb is deliberately oversized: this
+   has to be usable one-handed, in the dark, by someone in pain. */
+input[type="range"].big-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"].big-range::-webkit-slider-runnable-track {
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"].big-range::-moz-range-track {
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+input[type="range"].big-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 3rem;
+  height: 3rem;
+  margin-top: -0.9rem;
+  border-radius: 999px;
+  background: var(--sev, var(--accent));
+  border: 3px solid var(--text);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.5);
+}
+input[type="range"].big-range::-moz-range-thumb {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: var(--sev, var(--accent));
+  border: 3px solid var(--text);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.5);
+}
+input[type="range"].big-range:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The printable doctor report is the one place that must be light: it is
+   meant to come out of a printer or land in a PDF a clinic can read. */
+@media print {
+  /* The on-screen muted grey is tuned for a dark background and prints almost
+     invisibly, so it is darkened for paper. */
+  :root {
+    --muted: #4a4340;
+    --border: #9a9a9a;
+    --text: #000;
+  }
+  body {
+    background: #fff;
+    color: #000;
+    filter: none;
+    padding-bottom: 0;
+  }
+  .no-print { display: none !important; }
+  .print-plain {
+    background: #fff !important;
+    color: #000 !important;
+    border-color: #999 !important;
+  }
+}
