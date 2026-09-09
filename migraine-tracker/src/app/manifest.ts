@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Required, not decorative: with `output: "export"` a route handler must
+// declare itself static or the build refuses to collect it. The manifest is a
+// route handler, so it needs this even though it reads nothing at request time.
 export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
