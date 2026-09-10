@@ -24,27 +24,19 @@ So the hosted version is both easier to set up and closer to the real thing.
 
 ## Deploy it with Vercel
 
-Vercel hosts this kind of site free, and this repository is already connected
-to it.
+Vercel hosts this kind of site free.
 
 1. Go to [vercel.com](https://vercel.com) and sign in with GitHub.
 2. Click **Add New…** → **Project**.
-3. Find **Grab_and_gather_CRM** in the list and click **Import**.
-4. **This is the one setting that matters.** Find **Root Directory**, click
-   **Edit**, and choose the `migraine-tracker` folder. Without this, Vercel
-   tries to build the CRM instead, which needs a database and will fail.
-5. Leave everything else alone. Click **Deploy**.
-6. Wait about a minute. You'll get a link like
+3. Find **migraine-tracker** in the list and click **Import**.
+4. Change nothing. Vercel recognises what this is on its own. Click **Deploy**.
+5. Wait about a minute. You'll get a link like
    `https://migraine-tracker-xxxx.vercel.app`.
 
 That link is the app. Open it anywhere.
 
-### If the branch matters
-
-If the deploy fails saying it can't find the `migraine-tracker` folder, the
-app is on a branch Vercel isn't looking at. In the Vercel project: **Settings**
-→ **Git** → **Production Branch** → set it to the branch holding this app →
-then **Deployments** → **Redeploy**.
+If Vercel can't see the repository, click **Adjust GitHub App Permissions** on
+the import screen and give it access to `migraine-tracker`.
 
 ## Put it on a phone
 
